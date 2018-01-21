@@ -66,21 +66,9 @@ function trim(s) {
     return s.replace(/^\s+|\s+$/g, '').replace("mms://","http://");
 }
 
-var data = getJSON('menu/valuesofcategory?category=_country');
-var options = [], first = true;
-for (var i in data)
-    if (first) {
-        options.push([data[i], data[i], true]);
-        first = false;
-    } else
-        options.push([data[i], data[i]]);
-
 service.create(plugin.title, plugin.id + ":start", 'music', true, logo);
 
 settings.globalSettings(plugin.id, plugin.title, logo, plugin.synopsis);
-settings.createMultiOpt("country", "Country for the nearest stations", options, function(v) {
-    service.country = v;
-});
 settings.createAction("cleanFavorites", "Clean My Favorites", function() {
     store.list = "[]";
     popup.notify('Favorites has been cleaned successfully', 2);
@@ -234,17 +222,52 @@ new page.Route(plugin.id + ":category:(.*)", function(page, category) {
     page.loading = false;
 });
 
+function constructMultiopt(multiOpt, storageVariable) {
+    if (!storageVariable)
+        multiOpt[0][2] = true;
+    else
+        for (var i = 0; i < multiOpt.length; i++) {
+            if (multiOpt[i][0] == storageVariable) {
+                multiOpt[i][2] = true;
+                break;
+            }
+        }
+    return multiOpt;
+}
+
+var country = require('movian/store').create('country');
+if (!country.default) 
+    country.default = 'Ukraine';
+
 new page.Route(plugin.id + ":start", function(page) {
     setPageHeader(page, plugin.title);
+    page.loading = true;
     page.appendItem(plugin.id + ":search:", 'search', {
         title: 'Search at ' + plugin.title
     });
     //page.appendItem(plugin.id + ":favorites", "directory", {
     //    title: "My Favorites"
     //});
-    if (!service.country) service.country = "Ukraine";
-    page.appendItem(plugin.id + ":getByCategory:country:" + service.country, "directory", {
-	title: "Nearest stations (by settings)"
+    var isMultioptReady = false;
+    var options = [];
+    var data = getJSON('menu/valuesofcategory?category=_country');
+    for (var i in data)	
+        if (country.default == data[i]) 
+            options.push([data[i], data[i], true]);
+        else
+            options.push([data[i], data[i]]);
+
+    page.options.createMultiOpt('country', "Country for the nearest stations", options, function(v) {
+        if (isMultioptReady) {
+            country.default = v;
+            page.flush();
+            page.redirect(plugin.id + ':start');
+        }
+    });
+    isMultioptReady = true;
+
+    page.appendItem(plugin.id + ":getByCategory:country:" + country.default, "directory", {
+	title: "Nearest stations (" + country.default + ')' 
     });
     page.appendItem("", "separator", {});
     page.appendItem(plugin.id + ':list:Highlights:broadcast/gethighlights', "directory", {
@@ -274,6 +297,7 @@ new page.Route(plugin.id + ":start", function(page) {
     page.appendItem(plugin.id + ":category:language", "directory", {
         title: "Language"
     });
+    page.loading = false;
 });
 
 function search(page, query) {
