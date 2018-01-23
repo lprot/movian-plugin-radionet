@@ -302,6 +302,7 @@ new page.Route(plugin.id + ":start", function(page) {
 
 function search(page, query) {
     page.model.contents = 'grid';
+    setPageHeader(page, plugin.title);
     var fromPage = 0, tryToSearch = true;
     page.entries = 0;
 
@@ -324,11 +325,9 @@ function search(page, query) {
 }
 
 new page.Route(plugin.id + ":search:(.*)", function(page, query) {
-    setPageHeader(page, plugin.title + ' - ' + query);
     search(page, query);
 });
 
 page.Searcher(plugin.id, logo, function(page, query) {
-    setPageHeader(page, plugin.title + ' - ' + query);
     search(page, query);
 });

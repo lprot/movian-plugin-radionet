@@ -4,7 +4,7 @@
 	"homepage": "http://github.com/lprot/movian-plugin-radionet",
 	"title": "Radio.net",
 	"synopsis": "Online Radio, webradio, internetradio & music - Listen online on radio.net now.",
-	"version": "0.4.6",
+	"version": "0.4.7",
 	"file": "radionet.js",
 	"showtimeVersion": "4.8",
 	"type": "ecmascript",
